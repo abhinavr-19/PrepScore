@@ -12,7 +12,7 @@ if api_key:
 else:
     print("Warning: GOOGLE_API_KEY not found in environment.")
 
-model = genai.GenerativeModel('gemini-1.5-flash')
+model = genai.GenerativeModel('gemini-1.5-flash-latest')
 
 async def generate_assessment_questions(role: str, experience: str):
     prompt = f"""
@@ -50,28 +50,37 @@ async def evaluate_readiness(role, experience, resume_text, tech_answers, comm_t
     
     Inputs:
     - Resume Text: {resume_text[:2000]}
-    - Technical Answers: {tech_answers}
+    - Technical Answers (MCQs & Short Answer): {tech_answers}
     - Communication Transcript: {comm_text}
     - Portfolio URL: {portfolio_url or "Not provided"}
     
-    Tasks:
+    TIGHT CONSTRAINTS:
     1. Score Technical Skills (0-100)
     2. Score Resume Quality (0-100)
     3. Score Communication (0-100)
     4. Score Portfolio/Proof (0-100)
     5. Calculate Weighted Total Score (Tech: 30%, Resume: 25%, Comm: 25%, Port: 20%)
-    6. List 2 key strengths.
-    7. List 2 key gaps.
-    8. Provide a 7-day action plan.
-    9. Estimate timeline to be ready.
     
+    NEW PHASE 2 OUTPUTS:
+    6. Confidence Band: "Not Ready" (0-40), "Borderline" (41-70), or "Interview Ready" (71-100).
+    7. Failure Reason Predictor: One CONCISE sentence: "Most likely interview rejection reason: <reason>".
+    8. Scoring Explanation: 2-3 bullet points explaining EXACTLY how the signals led to this score.
+    9. 7-Day Fix Plan: Realistic 7-day plan with daily tasks (15-60 mins each).
+    10. Strengths & Gaps: 2 specific points each.
+
     Return the result strictly in JSON format:
     {{
         "overall_score": 0,
+        "confidence_band": "...",
+        "failure_reason": "...",
+        "scoring_explanation": ["...", "..."],
         "breakdown": {{ "technical": 0, "resume": 0, "communication": 0, "portfolio": 0 }},
         "strengths": ["...", "..."],
         "gaps": ["...", "..."],
-        "action_plan": ["...", "...", "..."],
+        "action_plan": [
+            {{ "day": 1, "task": "...", "outcome": "..." }},
+            ...
+        ],
         "timeline": "..."
     }}
     """
@@ -85,9 +94,12 @@ async def evaluate_readiness(role, experience, resume_text, tech_answers, comm_t
         print(f"Evaluation Error: {e}")
         return {
             "overall_score": 60,
-            "breakdown": { "technical": 60, "resume": 60, "communication": 60, "portfolio": 60 },
-            "strengths": ["Basic knowledge present", "Resume is readable"],
-            "gaps": ["Lacks depth in technical topics", "Communication needs focus"],
-            "action_plan": ["Review fundamentals", "Practice behavioral questions", "Optimize resume"],
-            "timeline": "4 weeks"
+            "confidence_band": "Borderline",
+            "failure_reason": "Technical depth in core role responsibilities is currently insufficient.",
+            "scoring_explanation": ["Resume structure is good but lacks metrics.", "Technical answers showed partial understanding."],
+            "breakdown": { "technical": 55, "resume": 65, "communication": 60, "portfolio": 50 },
+            "strengths": ["Clear communication style", "Relevant role experience"],
+            "gaps": ["Missing impact metrics in resume", "Weak understanding of optimization"],
+            "action_plan": [{"day": i, "task": "Review core concepts", "outcome": "Better clarity"} for i in range(1, 8)],
+            "timeline": "3 weeks"
         }

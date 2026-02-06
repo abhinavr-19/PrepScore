@@ -111,7 +111,11 @@ function App() {
             {step === 0 && <WelcomeView onStart={nextStep} />}
             {step === 1 && <ProfileStep profile={profile} onChange={handleProfileChange} onFile={handleFileUpload} onNext={startAssessment} loading={loading} />}
             {step === 2 && <MCQStep mcqs={assessment.mcqs} onNext={nextStep} />}
-            {step === 3 && <ShortAnswerStep onComplete={(val) => setAssessment(prev => ({ ...prev, shortAnswer: val }))} onNext={nextStep} />}
+            {step === 3 && <ShortAnswerStep
+                question={assessment.mcqs.find(q => q.type === 'short')?.question || "Explain how you would handle a sudden traffic spike in your application."}
+                onComplete={(val) => setAssessment(prev => ({ ...prev, shortAnswer: val }))}
+                onNext={nextStep}
+            />}
             {step === 4 && <CommStep onComplete={(val) => setAssessment(prev => ({ ...prev, commTranscript: val }))} onNext={submitAssessment} />}
             {step === 5 && <ProcessingView />}
             {step === 6 && <ResultsView results={results} onReset={() => setStep(0)} />}
@@ -184,9 +188,9 @@ function MCQStep({ mcqs, onNext }) {
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--primary)', marginBottom: '1rem' }}>
                 <Briefcase size={20} /> <span>Technical Signal</span>
             </div>
-            {mcqs.map((q, idx) => (
+            {mcqs.filter(q => q.type === 'mcq').map((q, idx) => (
                 <div key={q.id} style={{ marginBottom: '2rem' }}>
-                    <p style={{ fontWeight: '800', fontSize: '1.2rem', marginBottom: '1.5rem', textTransform: 'uppercase' }}>{idx + 1}. {q.text}</p>
+                    <p style={{ fontWeight: '800', fontSize: '1.2rem', marginBottom: '1.5rem', textTransform: 'uppercase' }}>{idx + 1}. {q.question || q.text}</p>
                     <div style={{ display: 'grid', gap: '0' }}>
                         {q.options.map((opt, oIdx) => (
                             <div
@@ -206,13 +210,13 @@ function MCQStep({ mcqs, onNext }) {
     )
 }
 
-function ShortAnswerStep({ onComplete, onNext }) {
+function ShortAnswerStep({ question, onComplete, onNext }) {
     return (
         <div className="glass-card animate-fade-in" style={{ padding: '2rem' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--primary)', marginBottom: '1rem' }}>
                 <CheckCircle size={20} /> <span>Conceptual Clarity</span>
             </div>
-            <p style={{ fontWeight: '600', marginBottom: '1rem' }}>Explain how you would handle a sudden traffic spike in your application.</p>
+            <p style={{ fontWeight: '800', fontSize: '1.1rem', marginBottom: '1.5rem', textTransform: 'uppercase' }}>{question}</p>
             <textarea
                 className="input-field"
                 rows="4"
@@ -307,24 +311,38 @@ function ProcessingView() {
 }
 
 function ResultsView({ results, onReset }) {
+    const [showExplanation, setShowExplanation] = useState(false);
+
+    const getBandClass = (band) => {
+        if (band?.toLowerCase().includes('ready') && !band.toLowerCase().includes('not')) return 'band-ready';
+        if (band?.toLowerCase().includes('borderline')) return 'band-borderline';
+        return 'band-notready';
+    };
+
     return (
         <div className="animate-fade-in">
             <div className="glass-card" style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
-                <h2 style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>Rediness Score</h2>
+                <h2 style={{ fontSize: '1.2rem', marginBottom: '0.2rem' }}>Interview Readiness</h2>
                 <div className="score-circle">
-                    <span style={{ fontSize: '4rem', fontWeight: '900' }}>{results.score}</span>
+                    <span style={{ fontSize: '4.5rem', fontWeight: '900' }}>{results.overall_score}</span>
                 </div>
-                <div style={{ background: 'black', color: 'white', display: 'inline-block', padding: '0.5rem 1.5rem', fontWeight: '800', textTransform: 'uppercase' }}>
-                    Highly Ready
+                <div className={`band-tag ${getBandClass(results.confidence_band)}`}>
+                    {results.confidence_band || "Calculating..."}
                 </div>
+
+                {results.failure_reason && (
+                    <div className="failure-card">
+                        ⚠️ {results.failure_reason}
+                    </div>
+                )}
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', gap: '1.5rem', marginBottom: '1.5rem' }}>
                 <div className="glass-card" style={{ padding: '1.5rem' }}>
-                    <h3 style={{ fontSize: '1rem', marginBottom: '1.2rem' }}>Signal Breakdown</h3>
-                    {Object.entries(results.breakdown).map(([key, val]) => (
+                    <h3 style={{ fontSize: '0.9rem', marginBottom: '1.2rem' }}>Signal Breakdown</h3>
+                    {Object.entries(results.breakdown || {}).map(([key, val]) => (
                         <div key={key} style={{ marginBottom: '1rem' }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', fontWeight: '800', textTransform: 'uppercase' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', fontWeight: '800', textTransform: 'uppercase' }}>
                                 <span>{key}</span>
                                 <span>{val}%</span>
                             </div>
@@ -335,23 +353,40 @@ function ResultsView({ results, onReset }) {
                     ))}
                 </div>
                 <div className="glass-card" style={{ padding: '1.5rem', background: 'var(--bauhaus-yellow)' }}>
-                    <h3 style={{ fontSize: '1rem', marginBottom: '1.2rem' }}>Insights</h3>
+                    <h3 style={{ fontSize: '0.9rem', marginBottom: '1.2rem' }}>Strengths & Gaps</h3>
                     <div style={{ marginBottom: '1rem' }}>
-                        {results.strengths.map((s, i) => <div key={i} style={{ fontSize: '0.85rem', fontWeight: '700', textTransform: 'uppercase', display: 'flex', gap: '0.5rem', marginBottom: '0.6rem' }}>● {s}</div>)}
+                        {(results.strengths || []).map((s, i) => <div key={i} style={{ fontSize: '0.8rem', fontWeight: '800', textTransform: 'uppercase', display: 'flex', gap: '0.5rem', marginBottom: '0.5rem' }}>● {s}</div>)}
                     </div>
                     <div>
-                        {results.gaps.map((g, i) => <div key={i} style={{ fontSize: '0.85rem', fontWeight: '700', textTransform: 'uppercase', display: 'flex', gap: '0.5rem', marginBottom: '0.6rem', color: 'var(--bauhaus-red)' }}>× {g}</div>)}
+                        {(results.gaps || []).map((g, i) => <div key={i} style={{ fontSize: '0.8rem', fontWeight: '800', textTransform: 'uppercase', display: 'flex', gap: '0.5rem', marginBottom: '0.5rem', color: 'var(--bauhaus-red)' }}>× {g}</div>)}
                     </div>
                 </div>
             </div>
 
+            <div className="glass-card" style={{ marginBottom: '1.5rem' }}>
+                <div className="explanation-summary" onClick={() => setShowExplanation(!showExplanation)}>
+                    <span>Why did I get this score?</span>
+                    <ArrowRight style={{ transform: showExplanation ? 'rotate(90deg)' : 'none', transition: '0.2s' }} />
+                </div>
+                {showExplanation && (
+                    <div className="animate-fade-in" style={{ marginTop: '1.5rem', padding: '1rem', border: '3px solid black', background: 'var(--off-white)' }}>
+                        {(results.scoring_explanation || []).map((exp, i) => (
+                            <p key={i} style={{ fontSize: '0.9rem', fontWeight: '600', marginBottom: '0.75rem' }}>• {exp}</p>
+                        ))}
+                    </div>
+                )}
+            </div>
+
             <div className="glass-card">
-                <h3 style={{ marginBottom: '1.5rem' }}>Action Plan</h3>
+                <h3 style={{ marginBottom: '1.5rem' }}>7-Day Strategic Fix Plan</h3>
                 <div style={{ display: 'grid', gap: '1rem' }}>
-                    {results.plan.map((step, i) => (
-                        <div key={i} style={{ display: 'flex', gap: '1.5rem', alignItems: 'flex-start' }}>
-                            <div style={{ background: 'var(--bauhaus-red)', border: '2px solid black', color: 'white', width: '32px', height: '32px', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1rem', fontWeight: '900' }}>{i + 1}</div>
-                            <div style={{ fontSize: '1.1rem', fontWeight: '600' }}>{step}</div>
+                    {(results.action_plan || []).map((step, i) => (
+                        <div key={i} className="plan-day-card">
+                            <div className="plan-day-num">{step.day || i + 1}</div>
+                            <div>
+                                <p style={{ fontWeight: '800', textTransform: 'uppercase', fontSize: '0.85rem' }}>{step.task}</p>
+                                <p style={{ fontSize: '0.8rem', fontWeight: '500', color: '#555' }}>Outcome: {step.outcome}</p>
+                            </div>
                         </div>
                     ))}
                 </div>
