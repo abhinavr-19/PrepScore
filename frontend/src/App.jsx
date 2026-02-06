@@ -121,21 +121,21 @@ function App() {
 
 function WelcomeView({ onStart }) {
     return (
-        <div className="glass-card animate-fade-in" style={{ padding: '3rem', textAlign: 'center' }}>
-            <div style={{ background: 'var(--primary)', width: '64px', height: '64px', borderRadius: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.5rem' }}>
-                <Target size={32} color="white" />
+        <div className="glass-card animate-fade-in" style={{ textAlign: 'center' }}>
+            <div style={{ background: 'var(--bauhaus-red)', width: '80px', height: '80px', border: 'var(--border-thick)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 2rem', borderRadius: '50%' }}>
+                <Target size={40} color="white" />
             </div>
-            <h1 style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>PrepPulse AI</h1>
-            <p style={{ color: 'var(--text-muted)', marginBottom: '2rem', fontSize: '1.1rem' }}>
-                Measure your interview readiness objectively in under 120 seconds.
+            <h1 style={{ fontSize: '3.5rem', marginBottom: '1.5rem', lineHeight: '0.8' }}>PrepPulse<br />AI</h1>
+            <p style={{ fontWeight: '600', marginBottom: '2.5rem', fontSize: '1.2rem', textTransform: 'uppercase' }}>
+                Objective Interview Readiness <br /> in 120 Seconds.
             </p>
-            <button className="btn btn-primary" onClick={onStart}>
-                Start Assessment <ArrowRight size={18} />
+            <button className="btn btn-primary" onClick={onStart} style={{ width: '100%' }}>
+                Start Assessment <ArrowRight size={22} />
             </button>
-            <div style={{ marginTop: '2rem', display: 'flex', justifyContent: 'center', gap: '2rem', color: 'var(--text-muted)', fontSize: '0.9rem' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><CheckCircle size={16} /> Technical</div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Mic size={16} /> Communication</div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><FileText size={16} /> Resume</div>
+            <div style={{ marginTop: '3rem', display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '1.5rem', fontWeight: '800', textTransform: 'uppercase', fontSize: '0.8rem' }}>
+                <div style={{ border: '2px solid black', padding: '0.5rem 1rem', background: 'var(--bauhaus-yellow)' }}>Technical</div>
+                <div style={{ border: '2px solid black', padding: '0.5rem 1rem', background: 'var(--bauhaus-blue)', color: 'white' }}>Communication</div>
+                <div style={{ border: '2px solid black', padding: '0.5rem 1rem', background: 'var(--bauhaus-red)', color: 'white' }}>Resume</div>
             </div>
         </div>
     )
@@ -185,14 +185,18 @@ function MCQStep({ mcqs, onNext }) {
                 <Briefcase size={20} /> <span>Technical Signal</span>
             </div>
             {mcqs.map((q, idx) => (
-                <div key={q.id} style={{ marginBottom: '1.5rem' }}>
-                    <p style={{ fontWeight: '600', marginBottom: '1rem' }}>{idx + 1}. {q.text}</p>
-                    <div style={{ display: 'grid', gap: '0.75rem' }}>
+                <div key={q.id} style={{ marginBottom: '2rem' }}>
+                    <p style={{ fontWeight: '800', fontSize: '1.2rem', marginBottom: '1.5rem', textTransform: 'uppercase' }}>{idx + 1}. {q.text}</p>
+                    <div style={{ display: 'grid', gap: '0' }}>
                         {q.options.map((opt, oIdx) => (
-                            <label key={oIdx} className="input-field" style={{ display: 'flex', alignItems: 'center', gap: '1rem', cursor: 'pointer', background: answers[q.id] === oIdx ? 'rgba(99, 102, 241, 0.2)' : '' }}>
-                                <input type="radio" name={`q-${q.id}`} onChange={() => setAnswers({ ...answers, [q.id]: oIdx })} checked={answers[q.id] === oIdx} style={{ accentColor: 'var(--primary)' }} />
+                            <div
+                                key={oIdx}
+                                className={`mcq-option ${answers[q.id] === oIdx ? 'selected' : ''}`}
+                                onClick={() => setAnswers({ ...answers, [q.id]: oIdx })}
+                            >
+                                <div style={{ width: '24px', height: '24px', border: '2px solid black', borderRadius: '50%', background: answers[q.id] === oIdx ? 'white' : 'transparent', flexShrink: 0 }}></div>
                                 {opt}
-                            </label>
+                            </div>
                         ))}
                     </div>
                 </div>
@@ -305,57 +309,53 @@ function ProcessingView() {
 function ResultsView({ results, onReset }) {
     return (
         <div className="animate-fade-in">
-            <div className="glass-card" style={{ padding: '2.5rem', textAlign: 'center', marginBottom: '1.5rem' }}>
-                <h2 style={{ fontSize: '1.2rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>Your Readiness Score</h2>
-                <div style={{ position: 'relative', width: '150px', height: '150px', margin: '1.5rem auto' }}>
-                    <svg viewBox="0 0 36 36" style={{ width: '100%', height: '100%', transform: 'rotate(-90deg)' }}>
-                        <path stroke="rgba(255,255,255,0.1)" strokeWidth="3" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                        <path stroke="var(--primary)" strokeWidth="3" strokeLinecap="round" fill="none" strokeDasharray={`${results.score}, 100`} d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                    </svg>
-                    <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', fontSize: '2.5rem', fontWeight: '800' }}>
-                        {results.score}
-                    </div>
+            <div className="glass-card" style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
+                <h2 style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>Rediness Score</h2>
+                <div className="score-circle">
+                    <span style={{ fontSize: '4rem', fontWeight: '900' }}>{results.score}</span>
                 </div>
-                <p style={{ fontWeight: '600', color: 'var(--success)' }}>Highly Ready!</p>
+                <div style={{ background: 'black', color: 'white', display: 'inline-block', padding: '0.5rem 1.5rem', fontWeight: '800', textTransform: 'uppercase' }}>
+                    Highly Ready
+                </div>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.5rem' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', gap: '1.5rem', marginBottom: '1.5rem' }}>
                 <div className="glass-card" style={{ padding: '1.5rem' }}>
-                    <h3 style={{ fontSize: '0.9rem', color: 'var(--text-muted)', marginBottom: '1rem' }}>Breakdown</h3>
+                    <h3 style={{ fontSize: '1rem', marginBottom: '1.2rem' }}>Signal Breakdown</h3>
                     {Object.entries(results.breakdown).map(([key, val]) => (
-                        <div key={key} style={{ marginBottom: '0.75rem' }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', marginBottom: '0.25rem' }}>
-                                <span style={{ textTransform: 'capitalize' }}>{key}</span>
+                        <div key={key} style={{ marginBottom: '1rem' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', fontWeight: '800', textTransform: 'uppercase' }}>
+                                <span>{key}</span>
                                 <span>{val}%</span>
                             </div>
-                            <div style={{ height: '4px', background: 'rgba(255,255,255,0.1)', borderRadius: '2px' }}>
-                                <div style={{ height: '100%', width: `${val}%`, background: 'var(--primary)', borderRadius: '2px' }}></div>
+                            <div className="breakdown-bar">
+                                <div className="breakdown-fill" style={{ width: `${val}%` }}></div>
                             </div>
                         </div>
                     ))}
                 </div>
-                <div className="glass-card" style={{ padding: '1.5rem' }}>
-                    <h3 style={{ fontSize: '0.9rem', color: 'var(--text-muted)', marginBottom: '1rem' }}>Strengths & Gaps</h3>
+                <div className="glass-card" style={{ padding: '1.5rem', background: 'var(--bauhaus-yellow)' }}>
+                    <h3 style={{ fontSize: '1rem', marginBottom: '1.2rem' }}>Insights</h3>
                     <div style={{ marginBottom: '1rem' }}>
-                        {results.strengths.map((s, i) => <div key={i} style={{ fontSize: '0.8rem', color: 'var(--success)', display: 'flex', gap: '0.5rem', marginBottom: '0.4rem' }}><CheckCircle size={14} /> {s}</div>)}
+                        {results.strengths.map((s, i) => <div key={i} style={{ fontSize: '0.85rem', fontWeight: '700', textTransform: 'uppercase', display: 'flex', gap: '0.5rem', marginBottom: '0.6rem' }}>● {s}</div>)}
                     </div>
                     <div>
-                        {results.gaps.map((g, i) => <div key={i} style={{ fontSize: '0.8rem', color: 'var(--error)', display: 'flex', gap: '0.5rem', marginBottom: '0.4rem' }}><AlertCircle size={14} /> {g}</div>)}
+                        {results.gaps.map((g, i) => <div key={i} style={{ fontSize: '0.85rem', fontWeight: '700', textTransform: 'uppercase', display: 'flex', gap: '0.5rem', marginBottom: '0.6rem', color: 'var(--bauhaus-red)' }}>× {g}</div>)}
                     </div>
                 </div>
             </div>
 
-            <div className="glass-card" style={{ padding: '2rem' }}>
-                <h3 style={{ marginBottom: '1.5rem' }}>7-Day Improvement Plan</h3>
+            <div className="glass-card">
+                <h3 style={{ marginBottom: '1.5rem' }}>Action Plan</h3>
                 <div style={{ display: 'grid', gap: '1rem' }}>
                     {results.plan.map((step, i) => (
-                        <div key={i} style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start' }}>
-                            <div style={{ background: 'var(--primary)', color: 'white', width: '24px', height: '24px', borderRadius: '50%', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.7rem', fontWeight: '800' }}>{i + 1}</div>
-                            <div style={{ fontSize: '0.95rem' }}>{step}</div>
+                        <div key={i} style={{ display: 'flex', gap: '1.5rem', alignItems: 'flex-start' }}>
+                            <div style={{ background: 'var(--bauhaus-red)', border: '2px solid black', color: 'white', width: '32px', height: '32px', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1rem', fontWeight: '900' }}>{i + 1}</div>
+                            <div style={{ fontSize: '1.1rem', fontWeight: '600' }}>{step}</div>
                         </div>
                     ))}
                 </div>
-                <button className="btn btn-primary" onClick={onReset} style={{ width: '100%', marginTop: '2rem' }}>Retake Assessment</button>
+                <button className="btn btn-primary" onClick={onReset} style={{ width: '100%', marginTop: '2.5rem' }}>Retake Assessment</button>
             </div>
         </div>
     )
